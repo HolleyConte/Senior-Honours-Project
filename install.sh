@@ -30,6 +30,9 @@ mamba install -y cosmosis cosmosis-build-standard-library cosmopower
 # build cosmosis
 source ./env/bin/activate
 source cosmosis-configure
+
+# Build the standard library, using the "spk" branch which
+# includes the cosmopower emulator
 cosmosis-build-standard-library spk
 
 echo

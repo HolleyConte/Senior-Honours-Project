@@ -9,14 +9,16 @@ according to the weights.
 
 This main point of that here is to remove the rows with very low weights
 that we don't actually care about.
+
+This script needs cosmosis v3.23 to run, which I'm in the process of releasing (08/09/25).
 """
 from astropy.table import Table
+# we don't actually use this but it registers the cosmosis table format
 import cosmosis.table
 import sys
 import scipy.special
 import numpy as np
 
-# we don't actually use this but it registers the cosmosis table format
 
 input_file = sys.argv[1]
 output_file = sys.argv[2]
