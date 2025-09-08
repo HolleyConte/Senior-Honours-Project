@@ -25,8 +25,7 @@ Here is an overview of the different phases of the project.
 
 
 # Setup steps
-Install the code from the terminal using the "install.sh" script. It may not work, but just
-let me know if so!
+Install the code from the terminal by using "cd" to get to a directory to the directory where you clone this repository and then running "./install.sh". It may not work, but just let me know if so!
 
 
 ## Joe's notes to himself
