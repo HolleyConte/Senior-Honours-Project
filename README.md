@@ -4,7 +4,7 @@
 
 The goal of the project is to test if importance sampling can be effective in speeding up sampling over a large collection of alternative realizations of the number density n(z) in a weak lensing analysis.
 
-## Step List
+Here is an overview of the different phases of the project:
 
 ### Setup
 - Install the CosmoSIS software on a laptop or school computer for testing, and on the Cuillin computer for larger runs.
