@@ -2,16 +2,22 @@
 set -e
 set -x
 
-#check if running on mac or linux
+# We download a package called "Miniforge" which lets us build an isolated
+# python environment in a local directory, so it won't interfere with anything
+# that you already have installed.
 UNAME=$(uname)
 if [ "$UNAME" == "Linux" ]; then
-    wget -O Miniforge3.sh  https://github.com/conda-forge/miniforge/releases/download/24.3.0-0/Miniforge3-Linux-x86_64.sh
+    URL="https://github.com/conda-forge/miniforge/releases/download/24.3.0-0/Miniforge3-Linux-x86_64.sh"
 elif [ "$UNAME" == "Darwin" ]; then
-    wget -O Miniforge3.sh  https://github.com/conda-forge/miniforge/releases/download/24.3.0-0/Miniforge3-MacOSX-arm64.sh
+    URL="https://github.com/conda-forge/miniforge/releases/download/24.3.0-0/Miniforge3-MacOSX-arm64.sh"
 else
     echo "Unsupported OS: $UNAME"
     exit 1
 fi
+
+# The wget command downloads a file from the internet. The -O option
+# lets us specify the name of the file we want to save it as.
+wget -O Miniforge3.sh $URL
 
 # Make the file we just downloaded executable so we can run it
 chmod +x Miniforge3.sh
@@ -24,15 +30,16 @@ chmod +x Miniforge3.sh
 # activate the environment we just created
 source ./env/bin/activate
 
-# install the things we need
-mamba install -y cosmosis cosmosis-build-standard-library cosmopower
+# install the things we need.
+mamba install -y cosmosis=3.23 cosmosis-build-standard-library cosmopower
 
 # build cosmosis
 source ./env/bin/activate
 source cosmosis-configure
 
 # Build the standard library, using the "spk" branch which
-# includes the cosmopower emulator
+# includes the cosmopower emulator. This is a faster version
+# of one of our standard pipelines.
 cosmosis-build-standard-library spk
 
 echo

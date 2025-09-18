@@ -1,0 +1,22 @@
+#!/bin/bash
+#SBATCH -n 32
+#SBATCH -c 1
+#SBATCH --time=12:00:00
+
+# This tells each *process* to use one *thread*. We can chat about what
+# that means if you're interested, but basically it controls how separate
+# CPUs co-operate to run the program.
+export OMP_NUM_THREADS=1
+
+# Go up one directory to where we installed everything. By default
+# this script starts whereever you submitted it from, so the idea
+# is that you submit this from the "baseline" directory.
+cd ..
+# Activate the cosmosis environment that we willed.
+source ./env/bin/activate
+source cosmosis-configure
+cd -
+
+
+# Launch this job. The "srun" makes it run on multiple CPUs
+srun -u -n 32 -c 1 cosmosis baseline.ini
