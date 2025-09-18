@@ -12,24 +12,6 @@ Here is an overview of the different phases of the project. I will gradually add
 - Importance sampling
 - Combining results
 
-<!-- ### Getting set up
-- Install the CosmoSIS software on a laptop or school computer for testing, and on the Cuillin computer for larger runs.
-- Dowload the n(z) that Joe's PhD student Yun-Hao has generated (should be ready before our first meeting!) -->
-
-### Baseline run
-- Launch a run on the Cuillin cluster of the baseline analysis
-- Make contour plots using the cosmosis-postprocess tool.
-
-### Increasing the temperature
-- Update the module in the "heat" directory to scale the likelihood with logL -> logL / T
-- Run an analysis with that new module activate on Cuillin
-- Make contour plots showing both this new analysis and the old one; we expect the new one's contours to be broader.
-
-### Importance sampling
-- Set up a collection of importance sample runs each of which takes the high-temperature chain as input and importance samples it with the same pipeline but the n(z) changed to a different realization.
-- See if the sampling is valid by looking at the standard deviations of the importance weights.
-
-
 # Getting set up
 
 In these first steps we can get set up with the code.
