@@ -19,7 +19,7 @@ In these first steps we can get set up with the code.
 ## Installing on your laptop
 
 First clone this repository using this command in your choice of working directory:
-    git clone https://github.com/joezuntz/shp-sem1-2025
+    git clone https://github.com/holleyconte/Senior-Honours-Project
 
 Then install the code from the terminal by using "cd" to get to a directory to the directory where it was cloned, and then running "./install.sh". It may not work, but just let me know if so! 
 
