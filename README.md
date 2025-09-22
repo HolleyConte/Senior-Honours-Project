@@ -31,12 +31,21 @@ where USERNAME is the user name that Eric emailed you. It will ask for the passw
 
 You can install on cuillin using the same commands as on your laptop.
 
-## Updating the data file
+## Getting the data file
 
-Right now (18/09/25) we are using a temporary redshift distribution. I'm waiting for a PhD student to send me a new file. We will need to update the file you're using once it's ready.
+My PhD student Yun-Hao Zhang has passed on a data file containing  500,000 samples of the redshift distributions. This is way more than we need! You can download the file here:
+
+https://www.dropbox.com/scl/fi/9usiawwilmv06rkxhbo6s/ENSEMBLE_Y1.hdf5.zip?rlkey=o96o2l7jr7xc41tm5zi5l1ah0&dl=1
+
+You will need to download it to your laptop first and then use `scp` to copy it to Cuillin later.
+
+Once you've downloaded it then unzip it in the data directory.
+
 
 
 # Running the baseline analysis
+
+In this analysis we won't do anything special, just run a basic analysis with a fixed n(z).
 
 ## Running on your laptop
 
@@ -99,5 +108,4 @@ Use the `cosmosis-postprocess` command on both the old and new files so we can c
 
 # Importance sampling
 
-I'll fill in this section as we progress!
 
