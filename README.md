@@ -78,7 +78,7 @@ You'll need to use your password again. Once that's done you will be on another 
 
 ## Making plots
 
-Use the `cosmosis-postproces` command once the chain is finished to make plots.
+Use the `cosmosis-postprocess` command once the chain is finished to make plots.
 
 # Increasing the temperature
 
