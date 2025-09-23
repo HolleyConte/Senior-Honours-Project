@@ -17,7 +17,7 @@ fi
 
 # The curl command downloads a file from the internet. The -o option
 # lets us specify the name of the file we want to save it as.
-curl -o Miniforge3.sh $URL
+curl -L -o Miniforge3.sh $URL
 
 # Make the file we just downloaded executable so we can run it
 chmod +x Miniforge3.sh
