@@ -19,4 +19,4 @@ cd -
 
 
 # Launch this job. The "srun" makes it run on multiple CPUs
-srun -u -n 32 -c 1 cosmosis params.ini
+srun -u -n 32 -c 1 cosmosis params.ini --mpi
