@@ -3,7 +3,7 @@ from cosmosis.datablock import option_section
 
 
 def setup(options):
-    section = options.get_string(option_section, "section", default="likelihood")
+    section = options.get_string(option_section, "section", default="likelihoods")
     name = options.get_string(option_section, "name", default="2pt_like")
     temperature = options.get_double(option_section, "temperature", default=1.0)
 
