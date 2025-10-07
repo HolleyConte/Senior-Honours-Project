@@ -2,7 +2,7 @@
 #SBATCH -n 32
 #SBATCH -c 1
 #SBATCH -N 1
-#SBATCH --time=12:00:00
+#SBATCH --time=3:00:00
 
 # This tells each *process* to use one *thread*. We can chat about what
 # that means if you're interested, but basically it controls how separate
@@ -20,4 +20,4 @@ cd -
 
 
 # Launch this job. The "srun" makes it run on multiple CPUs
-mpirun -n 32  cosmosis params.ini --mpi
+mpirun -n 32  cosmosis params.ini --mpi -p load_nz.index=0
