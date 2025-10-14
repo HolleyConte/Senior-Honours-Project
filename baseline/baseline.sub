@@ -20,4 +20,4 @@ cd -
 
 
 # Launch this job. The "srun" makes it run on multiple CPUs
-mpirun -n 32  cosmosis params.ini --mpi -p heat.temperature=5.0
+mpirun -n 32  cosmosis params.ini --mpi -p heat.temperature=8.0
