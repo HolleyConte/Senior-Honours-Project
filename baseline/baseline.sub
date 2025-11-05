@@ -21,4 +21,4 @@ cd -
 
 # Launch this job. The "srun" makes it run on multiple CPUs
 #mpirun -n 32  cosmosis params.ini --mpi -p heat.temperature=28.0
-mpirun -n 32  cosmosis params.ini --mpi -p load_nz.index=224 output.filename=n_z_real_index_224.txt
+mpirun -n 32  cosmosis params.ini --mpi -p load_nz.index=225 output.filename=n_z_real_index_225.txt
