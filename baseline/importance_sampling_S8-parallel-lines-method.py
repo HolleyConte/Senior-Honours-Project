@@ -26,21 +26,22 @@ for file in files:
     index_weights = np.exp(index_data[:, 6])  # 7th column for log weights, convert to weights
 
 
-
     # 2.3 use the range of S8 that i got from my "quantifying_S8.py" script
+    padding = 0.05
     s8_min = 0.769900769606458 - padding
     s8_max = 0.7889426268353242 + padding
-    padding = 0.05
 
     # 2.4 cut the schmear+T chain to that range
-    mask = (schmear_data[:, 0] >= s8_min) & (schmear_data[:, 0] <= s8_max) & \
-           (schmear_data[:, 1] >= y_min) & (schmear_data[:, 1] <= y_max)  # omega_m is in column 1
-    cut_schmear_data = schmear_data[mask]
     
     # define y_min and y_max for omega_m range
     y_min = 0.1
     y_max = 0.5
 
+    mask = (schmear_data[:, 0] >= s8_min) & (schmear_data[:, 0] <= s8_max) & \
+           (schmear_data[:, 1] >= y_min) & (schmear_data[:, 1] <= y_max)  # omega_m is in column 1
+    cut_schmear_data = schmear_data[mask]
+    
+    
 
 
     # 2.5 run the index pipeline on the subset of schmear+T and get posterior
