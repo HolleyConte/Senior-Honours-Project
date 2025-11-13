@@ -14,11 +14,17 @@ export OMP_NUM_THREADS=1
 # is that you submit this from the "baseline" directory.
 cd ..
 # Activate the cosmosis environment that we willed.
-source ./env/bin/activate
-source cosmosis-configure
+wrapperfunction() {
+    source ./env/bin/activate
+    source cosmosis-configure
+}
+wrapperfunction
+
 cd -
 
 
 # Launch this job. The "srun" makes it run on multiple CPUs
 #mpirun -n 32  cosmosis params.ini --mpi -p heat.temperature=28.0
-mpirun -n 32  cosmosis params.ini --mpi -p load_nz.index=230 output.filename=n_z_real_index_230.txt
+mpirun -n 32  cosmosis params.ini --mpi -p load_nz.index=$1 output.filename=n_z_real_index_$1.txt
+
+#mpirun -n 32 python importance_sampling_S8-parallel-lines-method_NEW.py

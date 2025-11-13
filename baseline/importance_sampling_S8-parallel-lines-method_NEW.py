@@ -30,6 +30,7 @@ import re
 import glob
 import numpy as np
 import cosmosis
+from mpi4py.MPI import COMM_WORLD as COMM
 
 
 # =========================
@@ -40,7 +41,7 @@ import cosmosis
 PARAMS_INI = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/params.ini"
 SCHMEAR_FILE = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/schmear_0.2_AND_temp_20.txt"
 INDEX_GLOB  = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/all_n_z_realizations/*.txt"
-OUT_DIR     = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/importance_sampling_results"
+OUT_DIR     = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/importance_sampling_results7"
 
 # Column mappings (0-based)
 OMEGA_M_COL   = 0         # Ω_m = column 1
@@ -59,9 +60,9 @@ PAD_S = 0.15
 
 # ========================
 # Testing!! cap the number of evaluations per index (None = use all of them, 10 = use first 10, etc)
-FIRST_N_EVAL = 500
+FIRST_N_EVAL = 400
 # Testing!! cap how many index files to run (None = use all of them)
-MAX_INDEX_FILES = None
+MAX_INDEX_FILES = 1
 # ========================
 
 
@@ -120,12 +121,23 @@ def project_ts(omega_m, S8, origin, t_hat, s_hat):
     return t, s
 
 
+# def parse_nz_index_from_filename(path):
+#     """
+#     Extract first integer from filename to use as the n(z) index override
+#     """
+#     m = re.search(r"(\d+)", os.path.basename(path))
+#     return int(m.group(1)) if m else -1
+
 def parse_nz_index_from_filename(path):
-    """
-    Extract first integer from filename to use as the n(z) index override
-    """
-    m = re.search(r"(\d+)", os.path.basename(path))
-    return int(m.group(1)) if m else -1
+    name = os.path.basename(path)
+    m = re.search(r"n_z[_-]real[_-]index[_-](\d+)\.txt$", name)
+    if not m:
+        # Fallback to first integer in the basename
+        m = re.search(r"(\d+)", name)
+    if not m:
+        raise ValueError(f"Error: Could not extract n(z) index from filename: {path}")
+    return int(m.group(1))
+
 
 
 
@@ -158,13 +170,17 @@ def main():
         print(f"Limiting to first {len(index_files)} index files.")
 
     for k, idx_path in enumerate(index_files, start=1):
-        print(f"\n[{k}/{len(index_files)}] Processing index: {idx_path}")
+        if k% COMM.Get_size() != COMM.Get_rank():
+            continue
+        print(f"\n[{k}/{len(index_files)}] {COMM.Get_rank()} Processing index: {idx_path}")
+
 
         # 2.1) Index cloud -> (Ωm, S8)
         idx_arr = np.loadtxt(idx_path)
         Om_i    = idx_arr[:, OMEGA_M_COL]
         sig8_i  = idx_arr[:, SIGMA8_COL]
         S8_i    = compute_S8(Om_i, sig8_i)
+        weights = np.exp(idx_arr[:, -N_TRAILING_TO_DROP ])  # last 3 cols are log_weight, prior, post
 
         # 2.2) Fit line (t_hat along, s_hat across)
         a, b, t_hat, s_hat = fit_line_S8_vs_Om(Om_i, S8_i)
@@ -179,24 +195,76 @@ def main():
 
         # 2.3) Cut schmear to the band
         t_s, s_s = project_ts(Om_s, S8_s, origin, t_hat, s_hat)
-        band_mask = (t_s >= t_min) & (t_s <= t_max) & (np.abs(s_s) <= s_half)
+        #band_mask = (t_s >= t_min) & (t_s <= t_max) & (np.abs(s_s) <= s_half)
+        band_mask = (np.abs(Om_s - np.average(Om_i, weights=weights)) <= (0.05)) & (np.abs(S8_s - np.average(S8_i, weights=weights)) <= 0.05)
 
         cut = schmear[band_mask]
         if cut.shape[0] == 0:
             print(f"  -> Band kept 0 points for {os.path.basename(idx_path)}. Increase PAD_T and/or PAD_S.")
             continue
 
+
         if FIRST_N_EVAL is not None:
             cut = cut[:FIRST_N_EVAL]
 
+
+
+        #================================================
+        #PLOT=============================================
+        import matplotlib.pyplot as plt
+
+        # Plot original chain and cut schmear points on the same plot
+        plt.scatter(S8_s, Om_s, color='blue', label='Original Chain', alpha=0.5)
+        cut_Om = cut[:, OMEGA_M_COL]
+        cut_S8 = compute_S8(cut_Om, cut[:, SIGMA8_COL])
+        plt.scatter(cut_S8, cut_Om, color='red', label='Cut Schmear Points', alpha=0.5)
+
+        # Labels and title
+        plt.xlabel(r'$\sigma_8$')
+        plt.ylabel(r'$\Omega_m$')
+        plt.title('Scatter Plot of $\Omega_m$ vs $\sigma_8$')
+        plt.legend()
+        plt.grid()
+
+        # Save the plot
+        plot_filename = os.path.join(OUT_DIR, f'plot_omegam_vs_sigma8_{k}.png')
+        plt.savefig(plot_filename)
+        plt.close()
+        print(f"  -> saved plot to: {plot_filename}")
+        #PLOT=============================================
+        #=================================================
+
+
+
+
         # 2.4) Pipeline for this index
+        # nz_idx = parse_nz_index_from_filename(idx_path)
+        # overrides = {("load_nz", "index"): str(nz_idx)}
+        # index_pipeline = cosmosis.LikelihoodPipeline(PARAMS_INI, override=overrides)
+        
+        from cosmosis.runtime.config import Inifile
         nz_idx = parse_nz_index_from_filename(idx_path)
-        overrides = {("load_nz", "index"): str(nz_idx)}
-        index_pipeline = cosmosis.LikelihoodPipeline(PARAMS_INI, override=overrides)
+        # Build a new ini, set the index explicitly, and pass the ini object
+        ini = Inifile(PARAMS_INI)
+        ini.set("load_nz", "index", str(nz_idx))
+        index_pipeline = cosmosis.LikelihoodPipeline(ini)
+
+        # Assert we really changed it (fails fast if not picked up)
+        try:
+            chosen = index_pipeline.options["load_nz"].getint("index")
+        except Exception:
+            # Fallback way to read it if the above accessor differs in your version
+            chosen = ini.getint("load_nz", "index")
+
+        if chosen != nz_idx:
+            raise RuntimeError(f"n(z) override failed: wanted {nz_idx}, got {chosen}")
+        else:
+            print(f"    -> using n(z) index = {chosen}")
+
+
 
         # 2.5) Evaluate log-posterior for each cut schmear row (ONLY the 6 model params)
         theta_mat = cut[:, PARAM_COLS]
-
 
         new_logpost = np.empty(theta_mat.shape[0], dtype=float)
         for i, theta in enumerate(theta_mat):
