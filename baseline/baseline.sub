@@ -2,7 +2,7 @@
 #SBATCH -n 32
 #SBATCH -c 1
 #SBATCH -N 1
-#SBATCH --time=5:00:00
+#SBATCH --time=12:00:00
 
 # This tells each *process* to use one *thread*. We can chat about what
 # that means if you're interested, but basically it controls how separate
@@ -25,6 +25,6 @@ cd -
 
 # Launch this job. The "srun" makes it run on multiple CPUs
 #mpirun -n 32  cosmosis params.ini --mpi -p heat.temperature=28.0
-mpirun -n 32  cosmosis params.ini --mpi -p load_nz.index=$1 output.filename=n_z_real_index_$1.txt
+#mpirun -n 32  cosmosis params.ini --mpi -p load_nz.index=$1 output.filename=n_z_real_index_$1.txt
 
-#mpirun -n 32 python importance_sampling_S8-parallel-lines-method_NEW.py
+mpirun -n 32 python importance_sampling_gorgeousCuillin.py
