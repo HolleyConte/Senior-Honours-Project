@@ -42,7 +42,7 @@ from mpi4py.MPI import COMM_WORLD as COMM
 PARAMS_INI = "params.ini"
 SCHMEAR_FILE = "schmear_0.2_AND_temp_20.txt"
 INDEX_GLOB  = "n_z_real_index_*.txt"
-OUT_DIR     = "importance_sampling_resultsCuillinAll"
+OUT_DIR     = "importance_sampling_resultsCuillinALL"
 
 # Column mappings (0-based)
 OMEGA_M_COL       = 0         # Ω_m = column 1
