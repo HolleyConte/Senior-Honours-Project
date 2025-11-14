@@ -42,7 +42,7 @@ from mpi4py.MPI import COMM_WORLD as COMM
 PARAMS_INI = "params.ini"
 SCHMEAR_FILE = "schmear_0.2_AND_temp_20.txt"
 INDEX_GLOB  = "n_z_real_index_*.txt"
-OUT_DIR     = "importance_sampling_resultsCuillin"
+OUT_DIR     = "importance_sampling_resultsCuillinAll"
 
 # Column mappings (0-based)
 OMEGA_M_COL       = 0         # Ω_m = column 1
@@ -61,7 +61,7 @@ BOX_HALF_SIG8 = BOX_HALF_S8
 # Testing!! cap the number of samples per index (None = use all of them, 10 = use first 10, etc)
 FIRST_N_EVAL = None
 # Testing!! cap how many index files to run (None = use all of them)
-MAX_INDEX_FILES = 10
+MAX_INDEX_FILES = None
 
 
 # To manually choose which indices go into the combined plots.
