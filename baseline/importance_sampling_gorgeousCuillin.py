@@ -52,8 +52,8 @@ SCHMEAR_POST_COL  = -1     # Schmear file has log-posterior in the last column (
 
 
 # selection box half-widths
-BOX_HALF_OM = 0.01
-BOX_HALF_S8 = 0.01
+BOX_HALF_OM = 0.025
+BOX_HALF_S8 = 0.025
 BOX_HALF_SIG8 = BOX_HALF_S8
 
 
