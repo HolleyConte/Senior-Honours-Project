@@ -32,6 +32,10 @@ import numpy as np
 import cosmosis
 from mpi4py.MPI import COMM_WORLD as COMM
 
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
 
 
 # =========================
@@ -42,19 +46,22 @@ from mpi4py.MPI import COMM_WORLD as COMM
 PARAMS_INI = "params.ini"
 SCHMEAR_FILE = "schmear_0.2_AND_temp_20.txt"
 INDEX_GLOB  = "n_z_real_index_*.txt"
-OUT_DIR     = "importance_sampling_resultsCuillinALL"
+OUT_DIR     = "importance_sampling_resultsCuillinALLNew"
+
 
 # Column mappings (0-based)
 OMEGA_M_COL       = 0         # Ω_m = column 1
 SIGMA8_COL        = 4         # σ_8 = column 5
 SCHMEAR_LOGW_COL  = 16        # schmear file has log-weights in column 17
 SCHMEAR_POST_COL  = -1     # Schmear file has log-posterior in the last column (col 19)
+LOGT_COL          = 5         # logt_agn = column 6
 
 
 # selection box half-widths
-BOX_HALF_OM = 0.025
-BOX_HALF_S8 = 0.025
+BOX_HALF_OM = 0.018
+BOX_HALF_S8   = 0.015
 BOX_HALF_SIG8 = BOX_HALF_S8
+BOX_HALF_LOGT = 0.3
 
 
 
@@ -114,8 +121,9 @@ def main():
     # 1) Load schmear once
     schmear = np.loadtxt(SCHMEAR_FILE)
     Om_s    = schmear[:, OMEGA_M_COL]
-    sig8_s  = schmear[:, SIGMA8_COL]
-    S8_s    = compute_S8(Om_s, sig8_s)
+    sig8_s  = schmear[:, SIGMA8_COL]      # true σ_8
+    S8_s    = compute_S8(Om_s, sig8_s)    # S8 combination
+    logT_s  = schmear[:, LOGT_COL]
 
     # proposal (old) log weights and log posterior (from schmear file)
     logw_old_full  = schmear[:, SCHMEAR_LOGW_COL]
@@ -130,34 +138,34 @@ def main():
         index_files = index_files[:MAX_INDEX_FILES]
         print(f"Limiting to first {len(index_files)} index files.")
 
-
-
-
     for k, idx_path in enumerate(index_files, start=1):
         # Simple MPI sharding: only process files where (k mod size) == rank
         if k% COMM.Get_size() != COMM.Get_rank():
             continue
         print(f"\n[{k}/{len(index_files)}] Rank: {COMM.Get_rank()} Processing index: {idx_path}")
 
-
         # 2.1) read index cloud and compute weighted means in (Ωm, S8)
         idx_arr = np.loadtxt(idx_path)
         Om_i    = idx_arr[:, OMEGA_M_COL]
         sig8_i  = idx_arr[:, SIGMA8_COL]
         S8_i    = compute_S8(Om_i, sig8_i)
+        logT_i = idx_arr[:, LOGT_COL]
 
         # weights from the index file (log_weight column)
         weights = np.exp(idx_arr[:, -3])   # columns: [6 params | log_weight | prior | post]
-
 
         # 2.2) cut schmear+temp chain to a simple rectangle centered at means
         # Centers in BOTH spaces:
         Om_center    = np.average(Om_i,   weights=weights)
         S8_center    = np.average(S8_i,   weights=weights)   # used for S8-space selection
         sig8_center  = np.average(sig8_i, weights=weights)   # used for σ8-space plotting edges
+        logT_center = np.average(logT_i, weights=weights)
 
-        band_mask = (np.abs(Om_s - Om_center) <= BOX_HALF_OM) & \
-                    (np.abs(S8_s - S8_center) <= BOX_HALF_S8)
+        band_mask = (
+            (np.abs(Om_s   - Om_center)   <= BOX_HALF_OM)   &
+            (np.abs(S8_s   - S8_center)   <= BOX_HALF_S8)   &
+            (np.abs(logT_s - logT_center) <= BOX_HALF_LOGT)
+        )
 
         cut = schmear[band_mask]
         if cut.shape[0] == 0:
@@ -166,13 +174,95 @@ def main():
         if FIRST_N_EVAL is not None:
             cut = cut[:FIRST_N_EVAL]
 
-
         # proposal (old) log posterior and log weight for these exact rows
         logpost_old = logpost_old_full[band_mask]
         logw_old    = logw_old_full[band_mask]
         if FIRST_N_EVAL is not None:
             logpost_old = logpost_old[:len(cut)]
             logw_old    = logw_old[:len(cut)]
+
+
+
+
+        # ============================================================
+        # Per-index diagnostic plots
+        # ============================================================
+        import matplotlib.pyplot as plt
+
+        idx_number = parse_nz_index_from_filename(idx_path)
+
+        # --- Prepare arrays ---
+        sig8_cut = cut[:, SIGMA8_COL]
+        Om_cut   = cut[:, OMEGA_M_COL]
+        logT_cut = cut[:, LOGT_COL]
+
+        # ============================================================
+        # Plot A: Ωm vs σ8  (pink boxes, σ8 on x-axis)
+        # ============================================================
+        plt.figure(figsize=(8,6))
+
+        # Background cloud
+        plt.scatter(sig8_s, Om_s, s=2, alpha=0.08,
+                    color='deepskyblue', label="original schmear+temp")
+
+        # Cut schmear
+        plt.scatter(sig8_cut, Om_cut, s=8, alpha=0.7,
+                    color='deeppink', label=f"cut schmear (index {idx_number})")
+
+        # Box edges (pink)
+        plt.axvline(sig8_center - BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
+        plt.axvline(sig8_center + BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
+        plt.axhline(Om_center   - BOX_HALF_OM,   color='deeppink', linestyle='--', linewidth=1.5)
+        plt.axhline(Om_center   + BOX_HALF_OM,   color='deeppink', linestyle='--', linewidth=1.5)
+
+        # Formatting
+        plt.xlabel(r'$\sigma_8$', fontsize=18)
+        plt.ylabel(r'$\Omega_m$', fontsize=18)
+        plt.title(rf'Ωm vs σ₈ Diagnostic (Index {idx_number})', fontsize=20)
+        plt.xlim(0.70, 0.90)
+        plt.ylim(0.22, 0.36)
+        plt.grid(alpha=0.3)
+        plt.legend(fontsize=12, markerscale=2)
+        plt.tight_layout()
+
+        plt.savefig(os.path.join(
+            OUT_DIR, f"diagnostic_{idx_number}_omegam_vs_sigma8.png"
+        ))
+        plt.close()
+
+        # ============================================================
+        # Plot B: logT_AGN vs σ8 (pink boxes, σ8 on y-axis)
+        # ============================================================
+        plt.figure(figsize=(8,6))
+
+        # Background cloud
+        plt.scatter(logT_s, sig8_s, s=2, alpha=0.08,
+                    color='deepskyblue', label="original schmear+temp")
+
+        # Cut points
+        plt.scatter(logT_cut, sig8_cut, s=8, alpha=0.7,
+                    color='deeppink', label=f"cut schmear (index {idx_number})")
+
+        # Box edges (pink)
+        plt.axhline(sig8_center - BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
+        plt.axhline(sig8_center + BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
+        plt.axvline(logT_center - BOX_HALF_LOGT, color='deeppink', linestyle='--', linewidth=1.5)
+        plt.axvline(logT_center + BOX_HALF_LOGT, color='deeppink', linestyle='--', linewidth=1.5)
+
+        # Formatting
+        plt.xlabel(r'$\log_{10}(T_{\mathrm{AGN}})$', fontsize=18)
+        plt.ylabel(r'$\sigma_8$', fontsize=18)
+        plt.title(rf'log($T_{{AGN}}$) vs σ₈ Diagnostic (Index {idx_number})', fontsize=20)
+        plt.xlim(7.0, 8.2)
+        plt.ylim(0.70, 0.90)
+        plt.grid(alpha=0.3)
+        plt.legend(fontsize=12, markerscale=2)
+        plt.tight_layout()
+
+        plt.savefig(os.path.join(
+            OUT_DIR, f"diagnostic_{idx_number}_logTagn_vs_sigma8.png"
+        ))
+        plt.close()
 
 
 
@@ -208,9 +298,8 @@ def main():
         # log_w_new = log_w_old + (log_post_new - log_post_old)
         logw_new = logw_old + (logpost_new - logpost_old)
 
-        # prior column: if you don't have one, zero is fine for postprocessing
+        # prior column: zero is fine for postprocessing
         prior_col = np.zeros_like(logpost_new)
-
 
         # 2.6) Primary output: EXACT same 9 columns as the originals
         # Replace 'log_weight' with the reweighted one
@@ -227,7 +316,6 @@ def main():
 
 
         # 2.7) Save with a cosmosis-friendly header + meta lines
-        # First line MUST be column names only:
         header_main = "# " + " ".join(PARAM_NAMES + ["log_weight", "prior", "post"])
 
         # Actual number of samples used (after any truncation)
@@ -240,6 +328,8 @@ def main():
             f"## box_center_Om = {Om_center:.6f}, half_width = {BOX_HALF_OM:.3f}",
             f"## box_center_S8 = {S8_center:.6f}, half_width = {BOX_HALF_S8:.3f}",
             f"## box_center_sigma8 = {sig8_center:.6f}, half_width = {BOX_HALF_SIG8:.3f}",
+            f"## box_center_logT = {logT_center:.6f}, half_width = {BOX_HALF_LOGT:.3f}",
+            f"## FIRST_N_EVAL = {FIRST_N_EVAL}",
             f"## number_of_samples_used = {n_used}",
         ]
         header_main = header_main + "\n" + "\n".join(meta_lines)
@@ -248,7 +338,7 @@ def main():
 
         base = os.path.splitext(os.path.basename(idx_path))[0]
         out_txt_main = os.path.join(OUT_DIR, f"reweight_{base}.txt")
-        out_txt_diag = os.path.join(OUT_DIR, f"reweight_{base}__diagnostics.txt")
+        out_txt_diag = os.path.join(OUT_DIR, f"reweight_{base}_diagnostics.txt")
 
         np.savetxt(out_txt_main, main_table, fmt="%.8f", header=header_main, comments="")
         np.savetxt(out_txt_diag, diag_table, fmt="%.8f", header=header_diag, comments="")

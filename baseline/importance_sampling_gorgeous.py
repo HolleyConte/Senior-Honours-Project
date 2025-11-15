@@ -44,19 +44,21 @@ from itertools import cycle
 PARAMS_INI = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/params.ini"
 SCHMEAR_FILE = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/schmear_0.2_AND_temp_20.txt"
 INDEX_GLOB  = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/all_n_z_realizations/*.txt"
-OUT_DIR     = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/importance_sampling_results10"
+OUT_DIR     = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/importance_sampling_resultsTest"
 
 # Column mappings (0-based)
 OMEGA_M_COL       = 0         # Ω_m = column 1
 SIGMA8_COL        = 4         # σ_8 = column 5
 SCHMEAR_LOGW_COL  = 16        # schmear file has log-weights in column 17
-SCHMEAR_POST_COL  = -1     # Schmear file has log-posterior in the last column (col 19)
-
+SCHMEAR_POST_COL  = -1        # Schmear file has log-posterior in the last column (col 19)
+LOGT_COL          = 5         # logt_agn = column 6
 
 # selection box half-widths
-BOX_HALF_OM = 0.01
-BOX_HALF_S8 = 0.01
+BOX_HALF_OM = 0.018
+BOX_HALF_S8   = 0.015
 BOX_HALF_SIG8 = BOX_HALF_S8
+BOX_HALF_LOGT = 0.3
+
 
 
 
@@ -118,6 +120,8 @@ def main():
     Om_s    = schmear[:, OMEGA_M_COL]
     sig8_s  = schmear[:, SIGMA8_COL]
     S8_s    = compute_S8(Om_s, sig8_s)
+    logT_s  = schmear[:, LOGT_COL]
+
 
     # proposal (old) log weights and log posterior (from schmear file)
     logw_old_full  = schmear[:, SCHMEAR_LOGW_COL]
@@ -162,19 +166,25 @@ def main():
         Om_i    = idx_arr[:, OMEGA_M_COL]
         sig8_i  = idx_arr[:, SIGMA8_COL]
         S8_i    = compute_S8(Om_i, sig8_i)
+        logT_i = idx_arr[:, LOGT_COL]
+
 
         # weights from the index file (log_weight column)
         weights = np.exp(idx_arr[:, -3])   # columns: [6 params | log_weight | prior | post]
-
 
         # 2.2) cut schmear+temp chain to a simple rectangle centered at means
         # Centers in BOTH spaces:
         Om_center    = np.average(Om_i,   weights=weights)
         S8_center    = np.average(S8_i,   weights=weights)   # used for S8-space selection
         sig8_center  = np.average(sig8_i, weights=weights)   # used for σ8-space plotting edges
+        logT_center = np.average(logT_i, weights=weights)
+        
 
-        band_mask = (np.abs(Om_s - Om_center) <= BOX_HALF_OM) & \
-                    (np.abs(S8_s - S8_center) <= BOX_HALF_S8)
+        band_mask = (
+            (np.abs(Om_s   - Om_center)   <= BOX_HALF_OM)   &
+            (np.abs(S8_s   - S8_center)   <= BOX_HALF_S8)   &
+            (np.abs(logT_s - logT_center) <= BOX_HALF_LOGT)
+        )
 
         cut = schmear[band_mask]
         if cut.shape[0] == 0:
@@ -204,8 +214,8 @@ def main():
 
             box_Om_centers.append(   Om_center )
             box_sig8_centers.append( sig8_center )           # <-- use σ8 center for edges on σ8 axis
-            box_logT_mins.append( np.min(cut[:, 5]) )
-            box_logT_maxs.append( np.max(cut[:, 5]) )
+            box_logT_mins.append( logT_center - BOX_HALF_LOGT )
+            box_logT_maxs.append( logT_center + BOX_HALF_LOGT )
         # --------------------------------------------------------------------
 
 
@@ -302,6 +312,9 @@ def main():
         # First line MUST be column names only:
         header_main = "# " + " ".join(PARAM_NAMES + ["log_weight", "prior", "post"])
 
+        # Actual number of samples used (after any truncation)
+        n_used = cut.shape[0]
+
         meta_lines = [
             "## reweighted schmear subset evaluated through index pipeline (weighted-mean box)",
             f"## index_file = {idx_path}",
@@ -309,7 +322,9 @@ def main():
             f"## box_center_Om = {Om_center:.6f}, half_width = {BOX_HALF_OM:.3f}",
             f"## box_center_S8 = {S8_center:.6f}, half_width = {BOX_HALF_S8:.3f}",
             f"## box_center_sigma8 = {sig8_center:.6f}, half_width = {BOX_HALF_SIG8:.3f}",
+            f"## box_center_logT = {logT_center:.6f}, half_width = {BOX_HALF_LOGT:.3f}",
             f"## FIRST_N_EVAL = {FIRST_N_EVAL}",
+            f"## number_of_samples_used = {n_used}",
         ]
         header_main = header_main + "\n" + "\n".join(meta_lines)
 
