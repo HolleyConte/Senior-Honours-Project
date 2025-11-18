@@ -46,7 +46,7 @@ import matplotlib.pyplot as plt
 PARAMS_INI = "params.ini"
 SCHMEAR_FILE = "schmear_0.2_AND_temp_20.txt"
 INDEX_GLOB  = "n_z_real_index_*.txt"
-OUT_DIR     = "importance_sampling_resultsCuillinALLNew"
+OUT_DIR     = "importance_sampling_resultsCuillinALLNew_Wider"
 
 
 # Column mappings (0-based)
@@ -58,10 +58,10 @@ LOGT_COL          = 5         # logt_agn = column 6
 
 
 # selection box half-widths
-BOX_HALF_OM = 0.018
-BOX_HALF_S8   = 0.015
+BOX_HALF_OM = 0.036
+BOX_HALF_S8   = 0.03
 BOX_HALF_SIG8 = BOX_HALF_S8
-BOX_HALF_LOGT = 0.3
+BOX_HALF_LOGT = 0.6
 
 
 
@@ -295,7 +295,6 @@ def main():
 
 
         # 2.5) Importance sampling (log-space)
-        # log_w_new = log_w_old + (log_post_new - log_post_old)
         logw_new = logw_old + (logpost_new - logpost_old)
 
         # prior column: zero is fine for postprocessing
