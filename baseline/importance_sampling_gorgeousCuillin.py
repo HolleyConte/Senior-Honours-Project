@@ -46,7 +46,7 @@ import matplotlib.pyplot as plt
 PARAMS_INI = "params.ini"
 SCHMEAR_FILE = "schmear_0.2_AND_temp_20.txt"
 INDEX_GLOB  = "n_z_real_index_*.txt"
-OUT_DIR     = "importance_sampling_resultsCuillinALLNew_Wider"
+OUT_DIR     = "importance_sampling_resultsCuillinALLNew_NoCut"
 
 
 # Column mappings (0-based)
@@ -161,18 +161,26 @@ def main():
         sig8_center  = np.average(sig8_i, weights=weights)   # used for σ8-space plotting edges
         logT_center = np.average(logT_i, weights=weights)
 
-        band_mask = (
-            (np.abs(Om_s   - Om_center)   <= BOX_HALF_OM)   &
-            (np.abs(S8_s   - S8_center)   <= BOX_HALF_S8)   &
-            (np.abs(logT_s - logT_center) <= BOX_HALF_LOGT)
-        )
+        # band_mask = (
+        #     (np.abs(Om_s   - Om_center)   <= BOX_HALF_OM)   &
+        #     (np.abs(S8_s   - S8_center)   <= BOX_HALF_S8)   &
+        #     (np.abs(logT_s - logT_center) <= BOX_HALF_LOGT)
+        # )
 
-        cut = schmear[band_mask]
-        if cut.shape[0] == 0:
-            print(f"  -> Box kept 0 points for {os.path.basename(idx_path)}. Increase BOX_HALF_OM/S8.")
-            continue
+        # cut = schmear[band_mask]
+        # if cut.shape[0] == 0:
+        #     print(f"  -> Box kept 0 points for {os.path.basename(idx_path)}. Increase BOX_HALF_OM/S8.")
+        #     continue
+        # if FIRST_N_EVAL is not None:
+        #     cut = cut[:FIRST_N_EVAL]
+
+        # --- NEW: keep all schmear points ---
+        band_mask = np.ones_like(Om_s, dtype=bool)   # all True
+        cut = schmear
         if FIRST_N_EVAL is not None:
             cut = cut[:FIRST_N_EVAL]
+
+
 
         # proposal (old) log posterior and log weight for these exact rows
         logpost_old = logpost_old_full[band_mask]
