@@ -46,7 +46,7 @@ import matplotlib.pyplot as plt
 PARAMS_INI = "params.ini"
 SCHMEAR_FILE = "schmear_0.2_AND_temp_20.txt"
 INDEX_GLOB  = "n_z_real_index_*.txt"
-OUT_DIR     = "importance_sampling_resultsCuillinALLNew_NoCut"
+OUT_DIR     = "importance_sampling_resultsCuillinALLNew_NoCut1"
 
 
 # Column mappings (0-based)
