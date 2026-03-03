@@ -68,7 +68,7 @@ BOX_HALF_LOGT = 0.6
 # Testing!! cap the number of samples per index (None = use all of them, 10 = use first 10, etc)
 FIRST_N_EVAL = None
 # Testing!! cap how many index files to run (None = use all of them)
-MAX_INDEX_FILES = None
+MAX_INDEX_FILES = 5
 
 
 # To manually choose which indices go into the combined plots.

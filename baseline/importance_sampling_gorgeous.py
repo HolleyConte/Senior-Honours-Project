@@ -44,7 +44,7 @@ from itertools import cycle
 PARAMS_INI = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/params.ini"
 SCHMEAR_FILE = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/schmear_0.2_AND_temp_20.txt"
 INDEX_GLOB  = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/all_n_z_realizations/*.txt"
-OUT_DIR     = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/importance_sampling_resultsTest"
+OUT_DIR     = "/Users/holleyconte/Desktop/Senior-Honours-Project/baseline/importance_sampling_resultsPRETTY_Wider"
 
 # Column mappings (0-based)
 OMEGA_M_COL       = 0         # Ω_m = column 1
@@ -54,16 +54,16 @@ SCHMEAR_POST_COL  = -1        # Schmear file has log-posterior in the last colum
 LOGT_COL          = 5         # logt_agn = column 6
 
 # selection box half-widths
-BOX_HALF_OM = 0.018
-BOX_HALF_S8   = 0.015
+BOX_HALF_OM = 0.036
+BOX_HALF_S8   = 0.03
 BOX_HALF_SIG8 = BOX_HALF_S8
-BOX_HALF_LOGT = 0.3
+BOX_HALF_LOGT = 0.6
 
 
 
 
 # Testing!! cap the number of samples per index (None = use all of them, 10 = use first 10, etc)
-FIRST_N_EVAL = 200
+FIRST_N_EVAL = 10000
 # Testing!! cap how many index files to run (None = use all of them)
 MAX_INDEX_FILES = 2
 
@@ -341,22 +341,22 @@ def main():
 
 
 
-    # ================================================================
+    # ====================================================================
     # COMBINED DIAGNOSTICS PLOTS: all processed indices on the same figure
-    # ================================================================
+    # ====================================================================
 
     # A small color cycle for index overlays
-    color_cycle = cycle(["deeppink", "orchid", "hotpink", "mediumvioletred", "crimson", "tomato"])
+    color_cycle = cycle(["deeppink", "mediumvioletred", "hotpink", "orchid", "crimson", "tomato"])
 
     # ---------- Plot A: Ωm vs σ8 with all pink boxes (σ8 on x-axis) ----------
     plt.figure()
-    plt.scatter(all_full_sig8, all_full_Om, s=2, alpha=0.08, color='deepskyblue', label="original schmear+temp")
+    plt.scatter(all_full_sig8, all_full_Om, s=2, alpha=0.08, color='deepskyblue', label="Total Broadened_(T+S)")
 
-    color_cycle = cycle(["deeppink", "orchid", "hotpink", "mediumvioletred", "crimson", "tomato"])
+    color_cycle = cycle(["deeppink", "mediumvioletred", "hotpink", "orchid", "crimson", "tomato"])
     for i, (sig8_cut_i, Om_cut_i, Om_c, sig8_c) in enumerate(
             zip(multi_sig8_cut, multi_Om_cut, box_Om_centers, box_sig8_centers), start=1):
         c = next(color_cycle)
-        plt.scatter(sig8_cut_i, Om_cut_i, s=6, alpha=0.6, color=c, label=f"cut schmear (index {i})")
+        plt.scatter(sig8_cut_i, Om_cut_i, s=6, alpha=0.6, color=c, label=f"Band mask (index {i})")
         # vertical edges at σ8_center ± BOX_HALF_SIG8
         plt.axvline(sig8_c - BOX_HALF_SIG8, color=c, linestyle='-',  alpha=0.7)
         plt.axvline(sig8_c + BOX_HALF_SIG8, color=c, linestyle='-',  alpha=0.7)
@@ -369,7 +369,7 @@ def main():
     plt.title('Ωm vs σ₈: multi-index cut boxes', fontsize=16)
     plt.ylim(0.22, 0.38)
     plt.xlim(0.7, 0.9)
-    plt.legend(markerscale=4, fontsize=8)
+    plt.legend(markerscale=4, fontsize=12)
     plt.grid(alpha=0.3); plt.tight_layout()
     plt.savefig(os.path.join(OUT_DIR, "combined_omegam_vs_sigma8.png"))
     plt.close()
@@ -377,13 +377,13 @@ def main():
 
     # ---------- Plot B: log(T_AGN) vs σ8 with all index overlays (σ8 on y-axis) ----------
     plt.figure()
-    plt.scatter(all_full_logT, all_full_sig8, s=2, alpha=0.08, color='deepskyblue', label="original schmear+temp")
+    plt.scatter(all_full_logT, all_full_sig8, s=2, alpha=0.08, color='deepskyblue', label="Total Broadened_(T+S)")
 
-    color_cycle = cycle(["deeppink", "orchid", "hotpink", "mediumvioletred", "crimson", "tomato"])
+    color_cycle = cycle(["deeppink", "mediumvioletred", "hotpink", "orchid", "crimson", "tomato"])
     for i, (sig8_cut_i, logT_cut_i, sig8_c, logT_min, logT_max) in enumerate(
             zip(multi_sig8_cut, multi_logT_cut, box_sig8_centers, box_logT_mins, box_logT_maxs), start=1):
         c = next(color_cycle)
-        plt.scatter(logT_cut_i, sig8_cut_i, s=6, alpha=0.6, color=c, label=f"cut schmear (index {i})")
+        plt.scatter(logT_cut_i, sig8_cut_i, s=6, alpha=0.6, color=c, label=f"Band mask (index {i})")
         # horizontal σ8 edges
         plt.axhline(sig8_c - BOX_HALF_SIG8, color=c, linestyle='-',  alpha=0.7)
         plt.axhline(sig8_c + BOX_HALF_SIG8, color=c, linestyle='-',  alpha=0.7)
@@ -395,7 +395,7 @@ def main():
     plt.ylabel(r'$\sigma_8$', fontsize=14)
     plt.title('log($T_{AGN}$) vs σ₈: multi-index cut boxes', fontsize=16)
     plt.ylim(0.7, 0.9)
-    plt.legend(markerscale=4, fontsize=8)
+    plt.legend(markerscale=4, fontsize=12)
     plt.grid(alpha=0.3); plt.tight_layout()
     plt.savefig(os.path.join(OUT_DIR, "combined_logTagn_vs_sigma8.png"))
     plt.close()
