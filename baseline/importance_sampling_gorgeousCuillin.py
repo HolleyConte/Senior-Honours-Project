@@ -46,7 +46,7 @@ import matplotlib.pyplot as plt
 PARAMS_INI = "params.ini"
 SCHMEAR_FILE = "schmear_0.2_AND_temp_20.txt"
 INDEX_GLOB  = "n_z_real_index_*.txt"
-OUT_DIR     = "importance_sampling_resultsCuillinALLNew_NoCut1"
+OUT_DIR     = "importance_sampling_results_NoCut"
 
 
 # Column mappings (0-based)
@@ -58,10 +58,10 @@ LOGT_COL          = 5         # logt_agn = column 6
 
 
 # selection box half-widths
-BOX_HALF_OM = 0.036
-BOX_HALF_S8   = 0.03
+BOX_HALF_OM = None
+BOX_HALF_S8   = None
 BOX_HALF_SIG8 = BOX_HALF_S8
-BOX_HALF_LOGT = 0.6
+BOX_HALF_LOGT = None
 
 
 
