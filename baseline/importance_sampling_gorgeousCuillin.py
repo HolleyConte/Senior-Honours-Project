@@ -46,24 +46,25 @@ import matplotlib.pyplot as plt
 PARAMS_INI = "params.ini"
 SCHMEAR_FILE = "schmear_0.2_AND_temp_20.txt"
 INDEX_GLOB  = "n_z_real_index_*.txt"
-OUT_DIR     = "importance_sampling_results_NoCut"
+OUT_DIR     = "xS2_importance_sampling_NoCut"
 
 
 # Column mappings (0-based)
 OMEGA_M_COL       = 0         # Ω_m = column 1
 SIGMA8_COL        = 4         # σ_8 = column 5
 SCHMEAR_LOGW_COL  = 16        # schmear file has log-weights in column 17
-SCHMEAR_POST_COL  = -1     # Schmear file has log-posterior in the last column (col 19)
+SCHMEAR_POST_COL  = -1        # Schmear file has log-posterior in the last column (col 19)
 LOGT_COL          = 5         # logt_agn = column 6
 
 
+# Toggle: True = apply band-mask cut, False = use full schmear (no cut)
+USE_BAND_MASK = False
+
 # selection box half-widths
-BOX_HALF_OM = None
-BOX_HALF_S8   = None
+BOX_HALF_OM = 0.036
+BOX_HALF_S8   = 0.03
 BOX_HALF_SIG8 = BOX_HALF_S8
-BOX_HALF_LOGT = None
-
-
+BOX_HALF_LOGT = 0.6
 
 # Testing!! cap the number of samples per index (None = use all of them, 10 = use first 10, etc)
 FIRST_N_EVAL = None
@@ -174,9 +175,22 @@ def main():
         # if FIRST_N_EVAL is not None:
         #     cut = cut[:FIRST_N_EVAL]
 
-        # --- NEW: keep all schmear points ---
-        band_mask = np.ones_like(Om_s, dtype=bool)   # all True
-        cut = schmear
+        # 2.2) Choose whether to cut (band-mask) or keep full schmear
+        if USE_BAND_MASK:
+            band_mask = (
+                (np.abs(Om_s   - Om_center)   <= BOX_HALF_OM)   &
+                (np.abs(S8_s   - S8_center)   <= BOX_HALF_S8)   &
+                (np.abs(logT_s - logT_center) <= BOX_HALF_LOGT)
+            )
+            cut = schmear[band_mask]
+            if cut.shape[0] == 0:
+                print(f"  -> Box kept 0 points for {os.path.basename(idx_path)}. Increase BOX_HALF_OM/S8/LOGT.")
+                continue
+        else:
+            band_mask = np.ones_like(Om_s, dtype=bool)   # all True
+            cut = schmear
+
+        # Optional truncation
         if FIRST_N_EVAL is not None:
             cut = cut[:FIRST_N_EVAL]
 
@@ -217,11 +231,12 @@ def main():
         plt.scatter(sig8_cut, Om_cut, s=8, alpha=0.7,
                     color='deeppink', label=f"cut schmear (index {idx_number})")
 
-        # Box edges (pink)
-        plt.axvline(sig8_center - BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
-        plt.axvline(sig8_center + BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
-        plt.axhline(Om_center   - BOX_HALF_OM,   color='deeppink', linestyle='--', linewidth=1.5)
-        plt.axhline(Om_center   + BOX_HALF_OM,   color='deeppink', linestyle='--', linewidth=1.5)
+        # Box edges (only if we are cutting)
+        if USE_BAND_MASK:
+            plt.axvline(sig8_center - BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
+            plt.axvline(sig8_center + BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
+            plt.axhline(Om_center   - BOX_HALF_OM,   color='deeppink', linestyle='--', linewidth=1.5)
+            plt.axhline(Om_center   + BOX_HALF_OM,   color='deeppink', linestyle='--', linewidth=1.5)
 
         # Formatting
         plt.xlabel(r'$\sigma_8$', fontsize=18)
@@ -251,11 +266,12 @@ def main():
         plt.scatter(logT_cut, sig8_cut, s=8, alpha=0.7,
                     color='deeppink', label=f"cut schmear (index {idx_number})")
 
-        # Box edges (pink)
-        plt.axhline(sig8_center - BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
-        plt.axhline(sig8_center + BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
-        plt.axvline(logT_center - BOX_HALF_LOGT, color='deeppink', linestyle='--', linewidth=1.5)
-        plt.axvline(logT_center + BOX_HALF_LOGT, color='deeppink', linestyle='--', linewidth=1.5)
+        # Box edges (only if we are cutting)
+        if USE_BAND_MASK:
+            plt.axhline(sig8_center - BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
+            plt.axhline(sig8_center + BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
+            plt.axvline(logT_center - BOX_HALF_LOGT, color='deeppink', linestyle='--', linewidth=1.5)
+            plt.axvline(logT_center + BOX_HALF_LOGT, color='deeppink', linestyle='--', linewidth=1.5)
 
         # Formatting
         plt.xlabel(r'$\log_{10}(T_{\mathrm{AGN}})$', fontsize=18)
@@ -332,10 +348,11 @@ def main():
             "## reweighted schmear subset evaluated through index pipeline (weighted-mean box)",
             f"## index_file = {idx_path}",
             f"## nz_index_override = {nz_idx}",
-            f"## box_center_Om = {Om_center:.6f}, half_width = {BOX_HALF_OM:.3f}",
-            f"## box_center_S8 = {S8_center:.6f}, half_width = {BOX_HALF_S8:.3f}",
-            f"## box_center_sigma8 = {sig8_center:.6f}, half_width = {BOX_HALF_SIG8:.3f}",
-            f"## box_center_logT = {logT_center:.6f}, half_width = {BOX_HALF_LOGT:.3f}",
+            f"## box_center_Om = {Om_center:.6f}, half_width = {BOX_HALF_OM}",
+            f"## box_center_S8 = {S8_center:.6f}, half_width = {BOX_HALF_S8}",
+            f"## box_center_sigma8 = {sig8_center:.6f}, half_width = {BOX_HALF_SIG8}",
+            f"## box_center_logT = {logT_center:.6f}, half_width = {BOX_HALF_LOGT}",
+            f"## USE_BAND_MASK = {USE_BAND_MASK}",
             f"## FIRST_N_EVAL = {FIRST_N_EVAL}",
             f"## number_of_samples_used = {n_used}",
         ]
