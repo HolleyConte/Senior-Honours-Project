@@ -46,7 +46,7 @@ import matplotlib.pyplot as plt
 PARAMS_INI = "params.ini"
 SCHMEAR_FILE = "schmear_0.2_AND_temp_20.txt"
 INDEX_GLOB  = "n_z_real_index_*.txt"
-OUT_DIR     = "xS2_importance_sampling_NoCut"
+OUT_DIR     = "xS2_importance_sampling_YesCut-test"
 
 
 # Column mappings (0-based)
@@ -57,8 +57,8 @@ SCHMEAR_POST_COL  = -1        # Schmear file has log-posterior in the last colum
 LOGT_COL          = 5         # logt_agn = column 6
 
 
-# Toggle: True = apply band-mask cut, False = use full schmear (no cut)
-USE_BAND_MASK = False
+# Toggle: True = apply band-mask cut, False = no cut
+USE_BAND_MASK = True
 
 # selection box half-widths
 BOX_HALF_OM = 0.036
@@ -69,7 +69,7 @@ BOX_HALF_LOGT = 0.6
 # Testing!! cap the number of samples per index (None = use all of them, 10 = use first 10, etc)
 FIRST_N_EVAL = None
 # Testing!! cap how many index files to run (None = use all of them)
-MAX_INDEX_FILES = 5
+MAX_INDEX_FILES = 3
 
 
 # To manually choose which indices go into the combined plots.
