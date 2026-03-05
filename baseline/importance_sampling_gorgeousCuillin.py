@@ -317,9 +317,44 @@ def main():
             lp, _ = index_pipeline.posterior(theta)
             logpost_new[i] = float(lp)
 
+        # ==========================
+        # drop unusable samples -- fixing the issue with the NaNs that was breaking cosmosis-postprocess
+        #   when we run no band-mask, a huge fraction of schmear samples are totally incompatible 
+        #   with that index’s likelihood/prior, so the pipeline returns -inf (or nan) for logpost_new (bad!!)
+        # ==========================
+        good = (
+            np.isfinite(logpost_new) &
+            np.isfinite(logpost_old) &
+            np.isfinite(logw_old)
+        )
+
+        # also drop absurdly low values that are "effectively -inf"
+        # good &= (logpost_new > -1e100) & (logpost_old > -1e100)
+
+        n_bad = np.size(good) - np.count_nonzero(good)
+        if n_bad > 0:
+            print(f"    -> dropping {n_bad} / {good.size} samples with non-finite logpost/logw")
+
+        cut         = cut[good]
+        theta_mat   = theta_mat[good]
+        logpost_new = logpost_new[good]
+        logpost_old = logpost_old[good]
+        logw_old    = logw_old[good]
+
+        if cut.shape[0] == 0:
+            print(f"    -> 0 finite samples remain for index {nz_idx}. "
+                f"No-cut run is too broad; need a cut / smarter subsample.")
+            continue
+
+
 
         # 2.5) Importance sampling (log-space)
         logw_new = logw_old + (logpost_new - logpost_old)
+
+        # ==========================
+        # NEW: rescale log-weights -- prevent underflow in cosmosis-postprocess
+        # ==========================
+        logw_new = logw_new - np.max(logw_new) 
 
         # prior column: zero is fine for postprocessing
         prior_col = np.zeros_like(logpost_new)
