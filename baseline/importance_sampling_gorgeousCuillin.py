@@ -58,7 +58,7 @@ LOGT_COL          = 5         # logt_agn = column 6
 
 
 # Toggle: True = apply band-mask cut, False = no cut
-USE_BAND_MASK = True
+USE_BAND_MASK = False
 
 # selection box half-widths
 BOX_HALF_OM = 0.036
