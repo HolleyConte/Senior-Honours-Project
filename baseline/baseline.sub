@@ -27,4 +27,5 @@ cd -
 #mpirun -n 32  cosmosis params.ini --mpi -p heat.temperature=20.0
 #mpirun -n 32  cosmosis params.ini --mpi -p load_nz.index=$1 output.filename=xS2-reduced_n_z_real_index_$1.txt
 
-mpirun -n 32 python importance_sampling_gorgeousCuillin.py
+#mpirun -n 32 python importance_sampling_gorgeousCuillin.py
+mpirun -n 32 python importance_sampling_CuillinReduced.py

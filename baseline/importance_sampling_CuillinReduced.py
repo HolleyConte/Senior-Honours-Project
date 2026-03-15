@@ -48,7 +48,7 @@ import matplotlib.pyplot as plt
 PARAMS_INI   = "params.ini"
 SCHMEAR_FILE = "S2_reducedParams/xS2-reduced_params_posterior_schmear_temp.txt"
 INDEX_GLOB   = "S2_reducedParams/xS2-reduced_n_z_real_index_*.txt"
-OUT_DIR      = "reduced_params_importance_sampling_NoCut"
+OUT_DIR      = "xS2-reduced_params_importance_sampling_NoCut"
 
 # Toggle: True = apply rectangular cut in (Omega_m, S8), False = use full schmear chain
 USE_BAND_MASK = False
