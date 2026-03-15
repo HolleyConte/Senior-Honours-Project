@@ -44,17 +44,28 @@ import matplotlib.pyplot as plt
 
 # Paths
 PARAMS_INI = "params.ini"
-SCHMEAR_FILE = "schmear_0.2_AND_temp_20.txt"
-INDEX_GLOB  = "n_z_real_index_*.txt"
-OUT_DIR     = "xS2_importance_sampling_NoCut-50"
+SCHMEAR_FILE = "xS2-reduced_params_posterior_schmear_temp.txt"
+INDEX_GLOB  = "xS2-reduced_n_z_real_index_*.txt"
+OUT_DIR     = "xS2-reduced_params_importance_sampling_NoCut"
 
 
 # Column mappings (0-based)
 OMEGA_M_COL       = 0         # Ω_m = column 1
-SIGMA8_COL        = 4         # σ_8 = column 5
-SCHMEAR_LOGW_COL  = 16        # schmear file has log-weights in column 17
+#SIGMA8_COL        = 4         # σ_8 = column 5
+SIGMA8_COL        = 1   #REDUCED FILES: σ_8 = column 2   
+#SCHMEAR_LOGW_COL  = 16        # schmear file has log-weights in column 17
+SCHMEAR_LOGW_COL  = 12  #REDUCED FILES: log-weights in column 13
 SCHMEAR_POST_COL  = -1        # Schmear file has log-posterior in the last column (col 19)
-LOGT_COL          = 5         # logt_agn = column 6
+#LOGT_COL          = 5         # logt_agn = column 6
+#LOGT_COL          =    #REDUCED FILES: logt_agn = n/a
+
+
+SCHMEAR_OMEGA_M_COL = 0 #REDUCED FILES schmear: Ω_m = column 1
+SCHMEAR_SIGMA8_COL  = 1 #REDUCED FILES schmear: σ_8 = column 2
+INDEX_LOGW_COL    = 2
+INDEX_PRIOR_COL   = 3
+INDEX_POST_COL    = 4
+
 
 
 # Toggle: True = apply band-mask cut, False = no cut
@@ -69,7 +80,7 @@ BOX_HALF_LOGT = 0.6
 # Testing!! cap the number of samples per index (None = use all of them, 10 = use first 10, etc)
 FIRST_N_EVAL = None
 # Testing!! cap how many index files to run (None = use all of them)
-MAX_INDEX_FILES = 50
+MAX_INDEX_FILES = None
 
 
 # To manually choose which indices go into the combined plots.
@@ -78,16 +89,24 @@ PLOT_INCLUDE_TOKENS = None
 # E.g. PLOT_INCLUDE_TOKENS = ["index_2.txt", "index_7.txt"]
 
 
-# EXACT parameter columns to pass to the pipeline and to save, in correct order
-PARAM_COLS = [0, 1, 2, 3, 4, 5]
-# Names must exactly match what cosmosis-postprocess expects for the originals:
+# # EXACT parameter columns to pass to the pipeline and to save, in correct order
+# PARAM_COLS = [0, 1, 2, 3, 4, 5]
+# # Names must exactly match what cosmosis-postprocess expects for the originals:
+# PARAM_NAMES = [
+#     "cosmological_parameters--omega_m",
+#     "cosmological_parameters--h0",
+#     "cosmological_parameters--ombh2",
+#     "cosmological_parameters--n_s",
+#     "cosmological_parameters--sigma_8",
+#     "halo_model_parameters--logt_agn",
+# ]
+
+
+#FOR REDUCED FILES:
+PARAM_COLS = [0, 1]
 PARAM_NAMES = [
     "cosmological_parameters--omega_m",
-    "cosmological_parameters--h0",
-    "cosmological_parameters--ombh2",
-    "cosmological_parameters--n_s",
     "cosmological_parameters--sigma_8",
-    "halo_model_parameters--logt_agn",
 ]
 
 
@@ -121,14 +140,24 @@ def main():
 
     # 1) Load schmear once
     schmear = np.loadtxt(SCHMEAR_FILE)
-    Om_s    = schmear[:, OMEGA_M_COL]
-    sig8_s  = schmear[:, SIGMA8_COL]      # true σ_8
-    S8_s    = compute_S8(Om_s, sig8_s)    # S8 combination
-    logT_s  = schmear[:, LOGT_COL]
+    # Om_s    = schmear[:, OMEGA_M_COL]
+    # sig8_s  = schmear[:, SIGMA8_COL]      # true σ_8
+    # S8_s    = compute_S8(Om_s, sig8_s)    # S8 combination
+    # logT_s  = schmear[:, LOGT_COL]
 
-    # proposal (old) log weights and log posterior (from schmear file)
-    logw_old_full  = schmear[:, SCHMEAR_LOGW_COL]
+    # # proposal (old) log weights and log posterior (from schmear file)
+    # logw_old_full  = schmear[:, SCHMEAR_LOGW_COL]
+    # logpost_old_full = schmear[:, SCHMEAR_POST_COL]
+
+
+    # FOR REDUCED FILES:
+    Om_s    = schmear[:, SCHMEAR_OMEGA_M_COL]
+    sig8_s  = schmear[:, SCHMEAR_SIGMA8_COL]
+    S8_s    = compute_S8(Om_s, sig8_s)
+    logw_old_full    = schmear[:, SCHMEAR_LOGW_COL]
     logpost_old_full = schmear[:, SCHMEAR_POST_COL]
+
+
 
 
     # 2) Index files to process
@@ -147,13 +176,25 @@ def main():
 
         # 2.1) read index cloud and compute weighted means in (Ωm, S8)
         idx_arr = np.loadtxt(idx_path)
+        # Om_i    = idx_arr[:, OMEGA_M_COL]
+        # sig8_i  = idx_arr[:, SIGMA8_COL]
+        # S8_i    = compute_S8(Om_i, sig8_i)
+        # logT_i = idx_arr[:, LOGT_COL]
+
+        # # weights from the index file (log_weight column)
+        # weights = np.exp(idx_arr[:, -3])   # columns: [6 params | log_weight | prior | post]
+
+
+        # FOR REDUCED FILES:
         Om_i    = idx_arr[:, OMEGA_M_COL]
         sig8_i  = idx_arr[:, SIGMA8_COL]
         S8_i    = compute_S8(Om_i, sig8_i)
-        logT_i = idx_arr[:, LOGT_COL]
 
-        # weights from the index file (log_weight column)
-        weights = np.exp(idx_arr[:, -3])   # columns: [6 params | log_weight | prior | post]
+        weights = np.exp(idx_arr[:, INDEX_LOGW_COL])
+
+
+
+
 
         # 2.2) cut schmear+temp chain to a simple rectangle centered at means
         # Centers in BOTH spaces:
@@ -176,12 +217,21 @@ def main():
         #     cut = cut[:FIRST_N_EVAL]
 
         # 2.2) Choose whether to cut (band-mask) or keep full schmear
+        # if USE_BAND_MASK:
+        #     band_mask = (
+        #         (np.abs(Om_s   - Om_center)   <= BOX_HALF_OM)   &
+        #         (np.abs(S8_s   - S8_center)   <= BOX_HALF_S8)   &
+        #         (np.abs(logT_s - logT_center) <= BOX_HALF_LOGT)
+        #     )
+        # FOR REDUCED FILES: 
         if USE_BAND_MASK:
             band_mask = (
-                (np.abs(Om_s   - Om_center)   <= BOX_HALF_OM)   &
-                (np.abs(S8_s   - S8_center)   <= BOX_HALF_S8)   &
-                (np.abs(logT_s - logT_center) <= BOX_HALF_LOGT)
+                (np.abs(Om_s - Om_center) <= BOX_HALF_OM) &
+                (np.abs(S8_s - S8_center) <= BOX_HALF_S8)
             )
+
+
+
             cut = schmear[band_mask]
             if cut.shape[0] == 0:
                 print(f"  -> Box kept 0 points for {os.path.basename(idx_path)}. Increase BOX_HALF_OM/S8/LOGT.")
@@ -216,7 +266,7 @@ def main():
         # --- Prepare arrays ---
         sig8_cut = cut[:, SIGMA8_COL]
         Om_cut   = cut[:, OMEGA_M_COL]
-        logT_cut = cut[:, LOGT_COL]
+        #logT_cut = cut[:, LOGT_COL]     #DELETED FOR REDUCED FILES: removed logT_agn
 
         # ============================================================
         # Plot A: Ωm vs σ8  (pink boxes, σ8 on x-axis)
@@ -256,37 +306,37 @@ def main():
         # ============================================================
         # Plot B: logT_AGN vs σ8 (pink boxes, σ8 on y-axis)
         # ============================================================
-        plt.figure(figsize=(8,6))
+        # plt.figure(figsize=(8,6))
 
-        # Background cloud
-        plt.scatter(logT_s, sig8_s, s=2, alpha=0.08,
-                    color='deepskyblue', label="original schmear+temp")
+        # # Background cloud
+        # plt.scatter(logT_s, sig8_s, s=2, alpha=0.08,
+        #             color='deepskyblue', label="original schmear+temp")
 
-        # Cut points
-        plt.scatter(logT_cut, sig8_cut, s=8, alpha=0.7,
-                    color='deeppink', label=f"cut schmear (index {idx_number})")
+        # # Cut points
+        # plt.scatter(logT_cut, sig8_cut, s=8, alpha=0.7,
+        #             color='deeppink', label=f"cut schmear (index {idx_number})")
 
-        # Box edges (only if we are cutting)
-        if USE_BAND_MASK:
-            plt.axhline(sig8_center - BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
-            plt.axhline(sig8_center + BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
-            plt.axvline(logT_center - BOX_HALF_LOGT, color='deeppink', linestyle='--', linewidth=1.5)
-            plt.axvline(logT_center + BOX_HALF_LOGT, color='deeppink', linestyle='--', linewidth=1.5)
+        # # Box edges (only if we are cutting)
+        # if USE_BAND_MASK:
+        #     plt.axhline(sig8_center - BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
+        #     plt.axhline(sig8_center + BOX_HALF_SIG8, color='deeppink', linestyle='-', linewidth=1.5)
+        #     plt.axvline(logT_center - BOX_HALF_LOGT, color='deeppink', linestyle='--', linewidth=1.5)
+        #     plt.axvline(logT_center + BOX_HALF_LOGT, color='deeppink', linestyle='--', linewidth=1.5)
 
-        # Formatting
-        plt.xlabel(r'$\log_{10}(T_{\mathrm{AGN}})$', fontsize=18)
-        plt.ylabel(r'$\sigma_8$', fontsize=18)
-        plt.title(rf'log($T_{{AGN}}$) vs σ₈ Diagnostic (Index {idx_number})', fontsize=20)
-        plt.xlim(7.0, 8.2)
-        plt.ylim(0.70, 0.90)
-        plt.grid(alpha=0.3)
-        plt.legend(fontsize=12, markerscale=2)
-        plt.tight_layout()
+        # # Formatting
+        # plt.xlabel(r'$\log_{10}(T_{\mathrm{AGN}})$', fontsize=18)
+        # plt.ylabel(r'$\sigma_8$', fontsize=18)
+        # plt.title(rf'log($T_{{AGN}}$) vs σ₈ Diagnostic (Index {idx_number})', fontsize=20)
+        # plt.xlim(7.0, 8.2)
+        # plt.ylim(0.70, 0.90)
+        # plt.grid(alpha=0.3)
+        # plt.legend(fontsize=12, markerscale=2)
+        # plt.tight_layout()
 
-        plt.savefig(os.path.join(
-            OUT_DIR, f"diagnostic_{idx_number}_logTagn_vs_sigma8.png"
-        ))
-        plt.close()
+        # plt.savefig(os.path.join(
+        #     OUT_DIR, f"diagnostic_{idx_number}_logTagn_vs_sigma8.png"
+        # ))
+        # plt.close()
 
 
 
