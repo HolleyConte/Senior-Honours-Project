@@ -44,9 +44,9 @@ import matplotlib.pyplot as plt
 
 # Paths
 PARAMS_INI = "params.ini"
-SCHMEAR_FILE = "schmear_0.2_AND_temp_20.txt"
-INDEX_GLOB  = "n_z_real_index_*.txt"
-OUT_DIR     = "xS2_importance_sampling_NoCut-50"
+SCHMEAR_FILE = "xS2-posterior_schmear_temp.txt"
+INDEX_GLOB  = "S2_original_n_z/xS2-n_z_real_index_*.txt"
+OUT_DIR     = "xS2_importance_sampling_NoCut-60hours"
 
 
 # Column mappings (0-based)
@@ -68,7 +68,7 @@ BOX_HALF_LOGT = 0.6
 
 # Testing!! 
 FIRST_N_EVAL = None   #cap the number of samples per index (None = use all of them, 10 = use first 10, etc)
-MAX_INDEX_FILES = 50  #cap how many index files to run (None = use all of them)
+MAX_INDEX_FILES = None  #cap how many index files to run (None = use all of them)
 
 
 # To manually choose which indices go into the combined plots.
