@@ -44,9 +44,9 @@ import matplotlib.pyplot as plt
 
 # Paths
 PARAMS_INI = "params.ini"
-SCHMEAR_FILE = "xS2-posterior_schmear_temp.txt"
-INDEX_GLOB  = "S2_original_n_z/xS2-n_z_real_index_*.txt"
-OUT_DIR     = "xS2_importance_sampling_NoCut-60hours"
+SCHMEAR_FILE = "xS2-posterior_schmear_temp_neff-160k.txt"
+INDEX_GLOB  = "S2_original_n_z_more/xS2-n_z_real_index_*.txt"
+OUT_DIR     = "xS2_importance_sampling_NoCut-60hours_101-200"
 
 
 # Column mappings (0-based)
